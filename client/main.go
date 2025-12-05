@@ -58,6 +58,4 @@ func main() {
 			log.Fatalf("stream read failed: %v", err)
 		}
 	}
-
-	// Optionally open additional streams for parallel work
 }
