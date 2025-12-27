@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"path"
@@ -36,7 +35,7 @@ func startRunE(cmd *cobra.Command, args []string) error{
 	}
 
 	// root context for all peers
-	rootCtx, cancel := context.WithCancel(context.Background())
+	rootCtx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
 	// single signal handler for the whole process
@@ -44,7 +43,7 @@ func startRunE(cmd *cobra.Command, args []string) error{
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigCh
-		logger.Info("Daemon stopping...")
+		logger.Info("stopping...")
 		cancel()
 	}()
 
@@ -61,7 +60,7 @@ func startRunE(cmd *cobra.Command, args []string) error{
 
 	// wait for all peers to finish or return error
 	if err := g.Wait(); err != nil {
-		return fmt.Errorf("one or more errors: %w", err)
+		return err
 	}
 
 	logger.Info("All bootstrap nodes exited cleanly")

@@ -2,6 +2,7 @@
 
 build:
 	go build -o bin/main ./main.go
+	sudo cp bin/main /usr/local/bin/bloc
 
 # Build server binary
 build-server:

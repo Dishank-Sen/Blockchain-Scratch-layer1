@@ -3,12 +3,16 @@ package users
 import (
 	"context"
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path"
 	"time"
 
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/internal/identity"
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils/logger"
 	"github.com/quic-go/quic-go"
 )
 
@@ -105,19 +109,24 @@ func MakeLive(ctx context.Context, addr string) error{
 	if err != nil {
 		return err
 	}
-	log.Printf("QUIC server listening on %s\n", addr)
+	logger.Info(fmt.Sprintf("QUIC server listening on %s\n", addr))
 
-	err = saveIdentity(addr)
-	if err != nil{
+	if err := saveIdentity(addr); err != nil{
 		return err
 	}
 
+	// currently not handling background process
+	sigctx, stop := signal.NotifyContext(ctx, os.Interrupt)
+	defer stop()
+
 	// Accept sessions forever
 	for {
-		sess, err := listener.Accept(ctx)
+		sess, err := listener.Accept(sigctx)
 		if err != nil {
-			log.Printf("listener accept error: %v\n", err)
-			continue
+			if errors.Is(err, context.Canceled) {
+				return fmt.Errorf("server shutdown complete")
+			}
+			return err
 		}
 		go handleSession(sess, addr)
 	}

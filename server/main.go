@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"log"
+	"os/signal"
 	"path"
 	"time"
 
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils/logger"
 	"github.com/quic-go/quic-go"
 )
 
@@ -78,12 +82,19 @@ func main(){
 	}
 	log.Printf("QUIC server listening on %s\n", addr)
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	// Accept sessions forever
 	for {
-		sess, err := listener.Accept(context.Background())
+		sess, err := listener.Accept(ctx)
 		if err != nil {
-			log.Printf("listener accept error: %v\n", err)
-			continue
+			if errors.Is(err, context.Canceled) {
+				logger.Info("server shutdown complete")
+				return
+			}
+			logger.Info(fmt.Sprintf("listener error: %v\n", err))
+			return
 		}
 		go handleSession(sess)
 	}
