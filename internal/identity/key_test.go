@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"main.go/internal/identity"
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/internal/identity"
 )
 
 // Test that GenerateKeyPairPEM returns PEM blocks that parse as RSA keys.

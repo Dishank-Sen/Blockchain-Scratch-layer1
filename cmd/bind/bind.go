@@ -1,13 +1,9 @@
 package bind
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-	"slices"
 
 	"github.com/spf13/cobra"
-	"main.go/users/types"
 )
 
 type BindCmd struct{
@@ -17,11 +13,13 @@ type BindCmd struct{
 func NewBindCmd() *BindCmd{
 	cmd := &cobra.Command{
 		Use: "bind",
-		Short: "adds the ip and port as bootstrap nodes",
+		Short: "binds two peers",
+		Long: "connects two peers provided and doing the handshake",
 		RunE: RunE,
 	}
 
-	cmd.Flags().StringP("addr", "a", "", "ip address and port")
+	cmd.Flags().StringP("addr1", "a1", "", "ip address and port for peer 1")
+	cmd.Flags().StringP("addr2", "a2", "", "ip address and port for peer 2")
 
 	return &BindCmd{
 		Cmd: cmd,
@@ -29,43 +27,7 @@ func NewBindCmd() *BindCmd{
 }
 
 func RunE(cmd *cobra.Command, args []string) error{
-	// fmt.Println("bind command executed..")
-	addr, err := cmd.Flags().GetString("addr")
-	if err != nil{
-		return err
-	}
+	fmt.Println("bind cmd executed")
 
-	return SaveAddr(addr)
-}
-
-func SaveAddr(addr string) error{
-	path := "bootstrap.json"
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		empty := []byte(`{"peers": []}`)
-		os.WriteFile(path, empty, 0644)
-	}
-
-	prevData, err := os.ReadFile(path)
-	if err != nil{
-		return err
-	}
-
-	var u types.UsersIdentity
-	err = json.Unmarshal(prevData, &u)
-	if err != nil{
-		return err
-	}
-	peers := u.Peers
-	if slices.Contains(peers, addr){
-		return fmt.Errorf("this address already exist in bootstrap")
-	}
-	u.Peers = append(peers, addr)
-
-	newData, err := json.Marshal(u)
-	if err != nil{
-		return err
-	}
-
-	return os.WriteFile(path, newData, 0644)
+	return nil
 }

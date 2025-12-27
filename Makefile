@@ -1,3 +1,8 @@
+# Makefile for building and running Go server and client applications
+
+build:
+	go build -o bin/main ./main.go
+
 # Build server binary
 build-server:
 	go build -o bin/server ./server
@@ -19,6 +24,10 @@ run-client: build-client
 
 run-bloc: build-bloc
 	./bin/bloc
+
+run:
+	make build
+	./bin/main
 
 # Clean binaries
 clean:

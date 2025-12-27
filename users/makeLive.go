@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"log"
+	"os"
 	"path"
 	"time"
 
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/internal/identity"
 	"github.com/quic-go/quic-go"
 )
 
@@ -27,7 +29,7 @@ func loadCert() (*tls.Config, error){
 	return config, nil
 }
 
-func handleSession(sess *quic.Conn) {
+func handleSession(sess *quic.Conn, addr string) {
 	defer func() {
 		_ = sess.CloseWithError(0, "closing")
 	}()
@@ -43,11 +45,12 @@ func handleSession(sess *quic.Conn) {
 			log.Printf("AcceptStream error (%s): %v\n", remote, err)
 			return
 		}
-		go handleStream(stream)
+		go handleStream(stream, addr)
 	}
 }
 
-func handleStream(s *quic.Stream) {
+func handleStream(s *quic.Stream, addr string) {
+	defer removeIdentity(addr)
 	defer s.Close()
 	buf := make([]byte, 4096)
 
@@ -64,14 +67,37 @@ func handleStream(s *quic.Stream) {
 	_, _ = s.Write([]byte("pong: " + time.Now().Format(time.RFC3339)))
 }
 
-func MakeLive(addr string) error{
+func saveIdentity(addr string) error{
+	privatePEM, publicPEM, err := identity.GenerateKeyPairPEM()
+	if err != nil{
+		return err
+	}
+	dir := path.Join("internal", "storage", addr)
+	privPath := path.Join(dir, "private.key")
+    pubPath  := path.Join(dir, "public.key")
+
+    if _, err := os.Stat(privPath); err == nil {
+        if _, err := os.Stat(pubPath); err == nil {
+            return nil
+        }
+    }
+
+	return identity.SaveKeyPair(dir, privatePEM, publicPEM)
+}
+
+func removeIdentity(addr string) error{
+	path := path.Join("internal", "storage", addr)
+	return os.RemoveAll(path)
+}
+
+func MakeLive(ctx context.Context, addr string) error{
 	tlsConf, err := loadCert()
 	if err != nil{
 		return err
 	}
 
 	quicConf := &quic.Config{
-		MaxIdleTimeout: 30 * time.Minute,
+		MaxIdleTimeout: 24 * time.Hour,
 	}
 
 	listener, err := quic.ListenAddr(addr, tlsConf, quicConf)
@@ -81,13 +107,18 @@ func MakeLive(addr string) error{
 	}
 	log.Printf("QUIC server listening on %s\n", addr)
 
+	err = saveIdentity(addr)
+	if err != nil{
+		return err
+	}
+
 	// Accept sessions forever
 	for {
-		sess, err := listener.Accept(context.Background())
+		sess, err := listener.Accept(ctx)
 		if err != nil {
 			log.Printf("listener accept error: %v\n", err)
 			continue
 		}
-		go handleSession(sess)
+		go handleSession(sess, addr)
 	}
 }
