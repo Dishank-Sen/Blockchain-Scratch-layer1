@@ -33,7 +33,7 @@ func loadCert() (*tls.Config, error){
 	return config, nil
 }
 
-func handleSession(sess *quic.Conn, addr string) {
+func handleSession(ctx context.Context, sess *quic.Conn, addr string) {
 	defer func() {
 		_ = sess.CloseWithError(0, "closing")
 	}()
@@ -43,7 +43,7 @@ func handleSession(sess *quic.Conn, addr string) {
 
 	// Accept streams in a loop
 	for {
-		stream, err := sess.AcceptStream(context.Background())
+		stream, err := sess.AcceptStream(ctx)
 		if err != nil {
 			// AcceptStream returns non-nil err when session is closed
 			log.Printf("AcceptStream error (%s): %v\n", remote, err)
@@ -128,6 +128,6 @@ func MakeLive(ctx context.Context, addr string) error{
 			}
 			return err
 		}
-		go handleSession(sess, addr)
+		go handleSession(ctx, sess, addr)
 	}
 }
