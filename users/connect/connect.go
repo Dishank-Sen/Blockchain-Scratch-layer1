@@ -3,13 +3,12 @@ package connect
 import (
 	"context"
 	"crypto/tls"
-	"log"
 	"time"
 
 	quic "github.com/quic-go/quic-go"
 )
 
-func Connect(addr string) {
+func Connect(addr string) error{
 	tlsConf := &tls.Config{
 		InsecureSkipVerify: true,        // trust every certificate
 		ServerName: "localhost",        // must match SAN DNS entry in server cert
@@ -23,7 +22,7 @@ func Connect(addr string) {
 	// Dial the server (performs UDP + QUIC + TLS handshake)
 	session, err := quic.DialAddr(context.Background(), addr, tlsConf, quicConf)
 	if err != nil {
-		log.Fatalf("DialAddr failed: %v", err)
+		return err
 	}
 	defer func() {
 		_ = session.CloseWithError(0, "client closing")
@@ -32,7 +31,7 @@ func Connect(addr string) {
 	// Open a bidirectional stream
 	stream, err := session.OpenStreamSync(context.Background())
 	if err != nil {
-		log.Fatalf("OpenStreamSync failed: %v", err)
+		return err
 	}
 	defer stream.Close()
 
@@ -48,6 +47,7 @@ func Connect(addr string) {
 	// buf := make([]byte, 4096)
 	// for {
 	// 	n, err := stream.Read(buf)
+
 	// 	if n > 0 {
 	// 		log.Printf("server reply: %s", string(buf[:n]))
 	// 	}
@@ -56,4 +56,5 @@ func Connect(addr string) {
 	// 		log.Fatalf("stream read failed: %v", err)
 	// 	}
 	// }
+	return nil
 }
