@@ -21,7 +21,7 @@ func main(){
 			// normal reinit completed, exit 0 (no message)
 			os.Exit(0)
 		}
-		logger.Error(ctx, stop, err.Error())
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/pkg/peer"
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -19,5 +20,9 @@ func Connect() *cobra.Command{
 
 func connectRunE(cmd *cobra.Command, args []string) error{
 	peer := peer.NewPeer(cmd.Context())
-	return peer.Dial()
+	logger.Info("daemon started..")
+	if err := peer.Connect(); err != nil{
+		return err
+	}
+	return nil
 }

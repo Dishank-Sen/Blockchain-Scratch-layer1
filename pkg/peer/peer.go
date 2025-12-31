@@ -4,10 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path"
+	"syscall"
+	"time"
 
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/client"
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/types"
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils"
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils/logger"
 	"github.com/quic-go/quic-go"
 )
 
@@ -20,7 +28,7 @@ type Peer struct{
 }
 
 func NewPeer(parentCtx context.Context) *Peer{
-	ctx, cancel := context.WithCancel(parentCtx)
+	ctx, cancel := signal.NotifyContext(parentCtx, os.Interrupt, syscall.SIGTERM)
 
 	id, err := getID()
 	if err != nil{
@@ -48,14 +56,61 @@ func getID() (string, error){
 	return m.ID, nil
 }
 
-func (p *Peer) Dial() error{
-	tlsConfig := getTlsConfig()
-	quicConfig := getQuicConfig()
+func (p *Peer) Connect() error{
+	socketPath := "/tmp/blocd.sock"
+	if !isDaemonRunning(socketPath){
+		cmd := exec.Command("blocd")
+		if err := cmd.Start(); err != nil{
+			return err
+		}
 
-	session, err := quic.DialAddr(p.ctx, p.addr, tlsConfig, quicConfig)
+		if err := waitForDaemon(socketPath, 3*time.Second); err != nil {
+			return err
+		}
+	}
+
+	client := client.NewClient(socketPath)
+
+	// resp, _ := client.Get("/ping")
+	// logger.Info(string(resp.Body))
+	id, err := utils.GetPeerID()
 	if err != nil{
 		return err
 	}
-	p.session = session
+	r := &types.RegisterBody{
+		ID: id,
+	}
+	byteData, err := json.Marshal(r)
+	if err != nil{
+		return err
+	}
+	resp, err := client.Post("/register", byteData)
+
+	logger.Info(string(resp.Body))
 	return nil
+}
+
+func isDaemonRunning(sockPath string) bool {
+	conn, err := net.Dial("unix", sockPath)
+	if err != nil {
+		_ = os.Remove(sockPath)
+		return false
+	}
+	conn.Close()
+	return true
+}
+
+func waitForDaemon(sockPath string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		conn, err := net.Dial("unix", sockPath)
+		if err == nil {
+			conn.Close()
+			return nil // daemon is ready
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	return fmt.Errorf("daemon did not become ready in time")
 }
