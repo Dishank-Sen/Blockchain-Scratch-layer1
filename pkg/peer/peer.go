@@ -7,9 +7,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path"
-	"syscall"
 	"time"
 
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/client"
@@ -28,7 +26,7 @@ type Peer struct{
 }
 
 func NewPeer(parentCtx context.Context) *Peer{
-	ctx, cancel := signal.NotifyContext(parentCtx, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := context.WithCancel(parentCtx)
 
 	id, err := getID()
 	if err != nil{
@@ -85,8 +83,13 @@ func (p *Peer) Connect() error{
 		return err
 	}
 	resp, err := client.Post("/register", byteData)
-
-	logger.Info(string(resp.Body))
+	if err != nil{
+		logger.Debug("error in /register")
+		return err
+	}
+	
+	logger.Debug(fmt.Sprintf("response message: %s", resp.Message))
+	logger.Info(fmt.Sprintf("response body: %s", string(resp.Body)))
 	return nil
 }
 
@@ -107,8 +110,10 @@ func waitForDaemon(sockPath string, timeout time.Duration) error {
 		conn, err := net.Dial("unix", sockPath)
 		if err == nil {
 			conn.Close()
+			logger.Debug("daemon ready")
 			return nil // daemon is ready
 		}
+		logger.Debug("waiting for daemon")
 		time.Sleep(50 * time.Millisecond)
 	}
 
