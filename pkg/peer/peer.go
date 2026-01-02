@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/client"
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/constants"
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/types"
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils"
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils/logger"
@@ -55,22 +56,19 @@ func getID() (string, error){
 }
 
 func (p *Peer) Connect() error{
-	socketPath := "/tmp/blocd.sock"
-	if !isDaemonRunning(socketPath){
+	if !isDaemonRunning(constants.SocketPath){
 		cmd := exec.Command("blocd")
 		if err := cmd.Start(); err != nil{
 			return err
 		}
 
-		if err := waitForDaemon(socketPath, 3*time.Second); err != nil {
+		if err := waitForDaemon(constants.SocketPath, 3*time.Second); err != nil {
 			return err
 		}
 	}
 
-	client := client.NewClient(socketPath)
+	client := client.NewClient(constants.SocketPath)
 
-	// resp, _ := client.Get("/ping")
-	// logger.Info(string(resp.Body))
 	id, err := utils.GetPeerID()
 	if err != nil{
 		return err
@@ -88,7 +86,7 @@ func (p *Peer) Connect() error{
 		return err
 	}
 	
-	logger.Debug(fmt.Sprintf("response message: %s", resp.Message))
+	// logger.Debug(fmt.Sprintf("response message: %s", resp.Message))
 	logger.Info(fmt.Sprintf("response body: %s", string(resp.Body)))
 	return nil
 }
@@ -110,10 +108,10 @@ func waitForDaemon(sockPath string, timeout time.Duration) error {
 		conn, err := net.Dial("unix", sockPath)
 		if err == nil {
 			conn.Close()
-			logger.Debug("daemon ready")
+			// logger.Debug("daemon ready")
 			return nil // daemon is ready
 		}
-		logger.Debug("waiting for daemon")
+		// logger.Debug("waiting for daemon")
 		time.Sleep(50 * time.Millisecond)
 	}
 
