@@ -13,14 +13,15 @@ func readUntilDelimiter(r *bufio.Reader, delim []byte) ([]byte, error) {
 		}
 		buf = append(buf, b)
 
-		if b == delim[match] {
+		switch b {
+		case delim[match]:
 			match++
 			if match == len(delim) {
 				return buf, nil
 			}
-		} else if b == delim[0] {
+		case delim[0]:
 			match = 1
-		} else {
+		default:
 			match = 0
 		}
 	}
