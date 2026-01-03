@@ -1,35 +1,39 @@
-# Makefile for building and running Go server and client applications
+# =========================
+# Makefile — bloc (CLI)
+# =========================
+
+APP_NAME=bloc
+CMD_PATH=./cmd/bloc
+BIN_DIR=bin
+
+GOOS ?= $(shell go env GOOS)
+
+ifeq ($(GOOS),windows)
+	EXT=.exe
+	INSTALL_DIR=$(USERPROFILE)\bin
+else
+	EXT=
+	INSTALL_DIR=/usr/local/bin
+endif
+
+BIN=$(BIN_DIR)/$(APP_NAME)$(EXT)
+
+.PHONY: build run install clean
 
 build:
-	go build -o bin/main ./main.go
-	sudo cp bin/main /usr/local/bin/bloc
+	go build -o $(BIN) $(CMD_PATH)
 
-# Build server binary
-build-server:
-	go build -o bin/server ./server
+run: build
+	$(BIN)
 
-# Build client binary
-build-client:
-	go build -o bin/client ./client
+install: build
+	@echo "Installing $(APP_NAME) to $(INSTALL_DIR)"
+ifeq ($(GOOS),windows)
+	@if not exist "$(INSTALL_DIR)" mkdir "$(INSTALL_DIR)"
+	copy $(BIN) "$(INSTALL_DIR)"
+else
+	sudo cp $(BIN) $(INSTALL_DIR)/$(APP_NAME)
+endif
 
-build-bloc:
-	go build -o bin/bloc ./cmd
-
-# Run server (auto-build)
-run-server: build-server
-	./bin/server
-
-# Run client (auto-build)
-run-client: build-client
-	./bin/client
-
-run-bloc: build-bloc
-	./bin/bloc
-
-run:
-	make build
-	./bin/main
-
-# Clean binaries
 clean:
-	rm -rf bin
+	rm -rf $(BIN_DIR)
