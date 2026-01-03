@@ -39,6 +39,36 @@ func CreateDir(ctx context.Context, cancel context.CancelFunc, dirPath string, r
 	return nil
 }
 
+/* -------------------- BOOTSTRAP -------------------- */
+
+func CreateBootstrap(ctx context.Context, cancel context.CancelFunc, filePath string, reinit bool) error {
+	if reinit {
+		info, err := os.Stat(filePath)
+		if err == nil && info.Size() > 0 {
+			return nil
+		}
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	u := types.UsersIdentity{Peers: []string{}}
+	data, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(filePath, data, 0700); err != nil {
+		return err
+	}
+
+	if ctx.Err() != nil {
+		cancel()
+		return errors.New("operation canceled during bootstrap creation")
+	}
+	return nil
+}
+
 /* -------------------- KEYS -------------------- */
 
 func CreateKeys(ctx context.Context, cancel context.CancelFunc, dirPath string, reinit bool) error {
