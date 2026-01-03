@@ -10,7 +10,7 @@ GOOS ?= $(shell go env GOOS)
 
 ifeq ($(GOOS),windows)
 	EXT=.exe
-	INSTALL_DIR=$(USERPROFILE)\bin
+	INSTALL_DIR=C:/Program Files/bloc
 else
 	EXT=
 	INSTALL_DIR=/usr/local/bin
@@ -18,22 +18,33 @@ endif
 
 BIN=$(BIN_DIR)/$(APP_NAME)$(EXT)
 
-.PHONY: build run install clean
+.PHONY: build install clean
 
 build:
-	go build -o $(BIN) $(CMD_PATH)
-
-run: build
-	$(BIN)
+	go build -o "$(BIN)" "$(CMD_PATH)"
 
 install: build
-	@echo "Installing $(APP_NAME) to $(INSTALL_DIR)"
 ifeq ($(GOOS),windows)
-	@if not exist "$(INSTALL_DIR)" mkdir "$(INSTALL_DIR)"
-	copy $(BIN) "$(INSTALL_DIR)"
+	@echo "Installing $(APP_NAME) (Administrator required)"
+	powershell -Command " \
+	  if (-not ([Security.Principal.WindowsPrincipal] \
+	    [Security.Principal.WindowsIdentity]::GetCurrent() \
+	    ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { \
+	      Write-Error 'Run make install as Administrator'; exit 1 \
+	  }"
+	powershell -Command "New-Item -ItemType Directory -Force '$(INSTALL_DIR)'"
+	powershell -Command "Copy-Item '$(BIN)' '$(INSTALL_DIR)/$(APP_NAME)$(EXT)' -Force"
+	powershell -Command " \
+	  $$path = [Environment]::GetEnvironmentVariable('Path','Machine'); \
+	  if ($$path -notlike '*$(INSTALL_DIR)*') { \
+	    [Environment]::SetEnvironmentVariable('Path', $$path + ';$(INSTALL_DIR)', 'Machine') \
+	  }"
+	@echo ""
+	@echo "SUCCESS: Installed to $(INSTALL_DIR)"
+	@echo "Restart all terminals to use 'bloc'"
 else
-	sudo cp $(BIN) $(INSTALL_DIR)/$(APP_NAME)
+	sudo cp "$(BIN)" "$(INSTALL_DIR)/$(APP_NAME)"
 endif
 
 clean:
-	rm -rf $(BIN_DIR)
+	rm -rf "$(BIN_DIR)"
