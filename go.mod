@@ -3,6 +3,7 @@ module github.com/Dishank-Sen/Blockchain-Scratch-layer1
 go 1.25.0
 
 require (
+	github.com/Microsoft/go-winio v0.6.2
 	github.com/quic-go/quic-go v0.57.1
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/sync v0.18.0
