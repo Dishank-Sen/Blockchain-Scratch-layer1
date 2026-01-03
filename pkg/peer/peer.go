@@ -17,7 +17,6 @@ import (
 
 type Peer struct {
 	id     string
-	addr   string
 	ctx    context.Context
 	cancel context.CancelFunc
 }
@@ -36,7 +35,6 @@ func NewPeer(parentCtx context.Context) (*Peer, error) {
 
 	return &Peer{
 		id:     id,
-		addr:   "127.0.0.1:4242",
 		ctx:    ctx,
 		cancel: cancel,
 	}, nil
