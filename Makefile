@@ -20,12 +20,18 @@ BIN=$(BIN_DIR)/$(APP_NAME)$(EXT)
 
 .PHONY: build install clean
 
+# -------------------------
+# Build
+# -------------------------
 build:
 	go build -o "$(BIN)" "$(CMD_PATH)"
 
+# -------------------------
+# Install / Replace binary
+# -------------------------
 install: build
 ifeq ($(GOOS),windows)
-	@echo "Installing $(APP_NAME) (Administrator required)"
+	@echo "Installing $(APP_NAME) to $(INSTALL_DIR) (Administrator required)"
 	powershell -Command " \
 	  if (-not ([Security.Principal.WindowsPrincipal] \
 	    [Security.Principal.WindowsIdentity]::GetCurrent() \
@@ -34,17 +40,13 @@ ifeq ($(GOOS),windows)
 	  }"
 	powershell -Command "New-Item -ItemType Directory -Force '$(INSTALL_DIR)'"
 	powershell -Command "Copy-Item '$(BIN)' '$(INSTALL_DIR)/$(APP_NAME)$(EXT)' -Force"
-	powershell -Command " \
-	  $$path = [Environment]::GetEnvironmentVariable('Path','Machine'); \
-	  if ($$path -notlike '*$(INSTALL_DIR)*') { \
-	    [Environment]::SetEnvironmentVariable('Path', $$path + ';$(INSTALL_DIR)', 'Machine') \
-	  }"
-	@echo ""
-	@echo "SUCCESS: Installed to $(INSTALL_DIR)"
-	@echo "Restart all terminals to use 'bloc'"
+	@echo "Replaced $(INSTALL_DIR)/$(APP_NAME)$(EXT)"
 else
 	sudo cp "$(BIN)" "$(INSTALL_DIR)/$(APP_NAME)"
 endif
 
+# -------------------------
+# Clean
+# -------------------------
 clean:
 	rm -rf "$(BIN_DIR)"
