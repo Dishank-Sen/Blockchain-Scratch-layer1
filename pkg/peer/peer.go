@@ -91,6 +91,20 @@ func (p *Peer) Connect() error{
 	return nil
 }
 
+<<<<<<< HEAD
+func (p *Peer) Disconnect() error {
+	running, err := isDaemonRunning()
+	if err != nil {
+		return err
+	}
+	if !running {
+		logger.Info("daemon already stopped")
+		return nil
+	}
+	// Force kill if running
+	logger.Warn("force killing daemon")
+	return forceKillDaemon()
+=======
 func isDaemonRunning(sockPath string) bool {
 	conn, err := net.Dial("unix", sockPath)
 	if err != nil {
@@ -116,4 +130,5 @@ func waitForDaemon(sockPath string, timeout time.Duration) error {
 	}
 
 	return fmt.Errorf("daemon did not become ready in time")
+>>>>>>> main
 }
