@@ -86,3 +86,17 @@ func (p *Peer) Connect() error {
 	logger.Info(fmt.Sprintf("daemon response: %s", string(resp.Body)))
 	return nil
 }
+
+func (p *Peer) Disconnect() error {
+	running, err := isDaemonRunning()
+	if err != nil {
+		return err
+	}
+	if !running {
+		logger.Info("daemon already stopped")
+		return nil
+	}
+	// Force kill if running
+	logger.Warn("force killing daemon")
+	return forceKillDaemon()
+}

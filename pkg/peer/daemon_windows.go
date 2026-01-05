@@ -1,8 +1,10 @@
 //go:build windows
+
 package peer
 
 import (
 	"context"
+	"os/exec"
 	"time"
 
 	"github.com/Microsoft/go-winio"
@@ -39,4 +41,9 @@ func waitForDaemon(timeout time.Duration) error {
 	}
 
 	return errors.ErrDaemonTimeout
+}
+
+func forceKillDaemon() error {
+	cmd := exec.Command("taskkill", "/IM", "blocd.exe", "/F")
+	return cmd.Run()
 }

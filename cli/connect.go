@@ -23,7 +23,7 @@ func connectRunE(cmd *cobra.Command, args []string) error{
 	if err != nil{
 		return err
 	}
-	logger.Info("daemon started..")
+	logger.Info("starting daemon...")
 	if err := peer.Connect(); err != nil{
 		return err
 	}

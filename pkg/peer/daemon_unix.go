@@ -4,6 +4,7 @@ package peer
 
 import (
 	"net"
+	"os/exec"
 	"time"
 
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/constants"
@@ -32,4 +33,9 @@ func waitForDaemon(timeout time.Duration) error {
 	}
 
 	return errors.ErrDaemonTimeout
+}
+
+func forceKillDaemon() error {
+	cmd := exec.Command("pkill", "blocd")
+	return cmd.Run()
 }
