@@ -1,2 +1,3 @@
-.bloc/
 bin/
+.bloc/
+*.exe

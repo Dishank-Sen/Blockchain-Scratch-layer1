@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/client"
+	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/constants"
 	"github.com/Dishank-Sen/Blockchain-Scratch-layer1/utils/logger"
 	"github.com/spf13/cobra"
 )
@@ -52,7 +53,7 @@ func peerRunE(cmd *cobra.Command, args []string) error {
 }
 
 func handleList() error {
-	c := client.NewClient()
+	c := client.NewClient(constants.SocketPath)
 
 	resp, err := c.Get("/peers")
 	if err != nil {

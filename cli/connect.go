@@ -19,11 +19,8 @@ func Connect() *cobra.Command{
 }
 
 func connectRunE(cmd *cobra.Command, args []string) error{
-	peer, err := peer.NewPeer(cmd.Context())
-	if err != nil{
-		return err
-	}
-	logger.Info("starting daemon...")
+	peer := peer.NewPeer(cmd.Context())
+	logger.Info("daemon started..")
 	if err := peer.Connect(); err != nil{
 		return err
 	}
