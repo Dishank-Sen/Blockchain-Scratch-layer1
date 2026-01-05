@@ -2,21 +2,29 @@
 # Makefile — bloc (CLI)
 # =========================
 
-APP_NAME=bloc
-CMD_PATH=./cmd/bloc
-BIN_DIR=bin
+APP_NAME := bloc
+CMD_PATH := ./cmd/bloc
+BIN_DIR  := bin
 
 GOOS ?= $(shell go env GOOS)
 
+# -------------------------
+# OS-specific settings
+# -------------------------
 ifeq ($(GOOS),windows)
-	EXT=.exe
-	INSTALL_DIR=C:/Program Files/bloc
+	EXT := .exe
+	INSTALL_SUPPORTED := false
+else ifeq ($(GOOS),darwin)
+	EXT :=
+	INSTALL_SUPPORTED := false
 else
-	EXT=
-	INSTALL_DIR=/usr/local/bin
+	# linux
+	EXT :=
+	INSTALL_SUPPORTED := true
+	INSTALL_DIR := /usr/local/bin
 endif
 
-BIN=$(BIN_DIR)/$(APP_NAME)$(EXT)
+BIN := $(BIN_DIR)/$(APP_NAME)$(EXT)
 
 .PHONY: build install clean
 
@@ -24,25 +32,18 @@ BIN=$(BIN_DIR)/$(APP_NAME)$(EXT)
 # Build
 # -------------------------
 build:
+	@echo "Building for $(GOOS)..."
 	go build -o "$(BIN)" "$(CMD_PATH)"
 
 # -------------------------
-# Install / Replace binary
+# Install (Linux only)
 # -------------------------
-install: build
-ifeq ($(GOOS),windows)
-	@echo "Installing $(APP_NAME) to $(INSTALL_DIR) (Administrator required)"
-	powershell -Command " \
-	  if (-not ([Security.Principal.WindowsPrincipal] \
-	    [Security.Principal.WindowsIdentity]::GetCurrent() \
-	    ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { \
-	      Write-Error 'Run make install as Administrator'; exit 1 \
-	  }"
-	powershell -Command "New-Item -ItemType Directory -Force '$(INSTALL_DIR)'"
-	powershell -Command "Copy-Item '$(BIN)' '$(INSTALL_DIR)/$(APP_NAME)$(EXT)' -Force"
-	@echo "Replaced $(INSTALL_DIR)/$(APP_NAME)$(EXT)"
-else
+install:
+ifeq ($(INSTALL_SUPPORTED),true)
+	@echo "Installing $(APP_NAME) to $(INSTALL_DIR)"
 	sudo cp "$(BIN)" "$(INSTALL_DIR)/$(APP_NAME)"
+else
+	@echo "Install is not supported on $(GOOS). Build output is: $(BIN)"
 endif
 
 # -------------------------
